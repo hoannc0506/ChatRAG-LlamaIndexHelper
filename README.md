@@ -1,7 +1,7 @@
-# RAG Projects
-An chatbot specify to answer question relevant to LlamaIndex
+# LlamaIndexHelper
+A chatbot specifically designed to answer questions about RAG and LlamaIndex.
 
-## Datasets
+## Data
 - Craw from https://www.llamaindex.ai/blog
 
 ## Pipelines

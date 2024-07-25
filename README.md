@@ -11,5 +11,5 @@ A chatbot specifically designed to answer questions about RAG and LlamaIndex.
 
 
 ## TODO
-[ ] Evaluate RAG pipeline
-[ ] Enhance querying stage with Summary Router
+- [ ] Evaluate RAG pipeline
+- [ ] Enhance querying stage with Summary Route

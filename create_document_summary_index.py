@@ -23,7 +23,7 @@ import prompt_utils
 import fire
 
 
-def main(local_db_dir):
+def main(local_db_dir, collection_name):
     # load embeddings
     embed_model = HuggingFaceEmbedding(model_name="models/bge-small-en-v1.5", device="cuda")
     
@@ -66,8 +66,7 @@ def main(local_db_dir):
     chroma_client = chromadb.PersistentClient(path="./chroma_db")
     
     # Get or create a collection with the given name and metadata.
-    
-    vector_collection = chroma_client.get_or_create_collection("blogs_summary")
+    vector_collection = chroma_client.get_or_create_collection(collection_name)
     vector_store = ChromaVectorStore(
         chroma_collection=vector_collection,
         persist_dir=local_db_dir

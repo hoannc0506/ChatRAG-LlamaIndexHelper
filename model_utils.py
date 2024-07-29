@@ -21,6 +21,9 @@ def load_model(model_name_or_path, device="cuda"):
         device_map=device,
         attn_implementation="flash_attention_2" # enable flash attention
     )
+
+    # setting pad token by eos token if needed
+    # model.generation_config.pad_token_id = model.generation_config.eos_token_id
     
     return model, tokenizer
 

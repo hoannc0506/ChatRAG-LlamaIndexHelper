@@ -5,6 +5,8 @@ A chatbot specifically designed to answer questions about RAG and LlamaIndex.
 - Craw from https://www.llamaindex.ai/blog
 
 ## Pipelines
+[Basic pipeline RAG](./assets/rag_basic_pipeline.png)
+
 - Crawl and clean html web pages
 - Build local vector database with chromadb
 - Build document summary index

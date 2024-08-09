@@ -5,6 +5,8 @@ import os
 import json
 from tqdm import tqdm
 import fire
+import re
+import html2text
 
 # Extract and print the main text from each card
 def get_blog_urls():
@@ -57,8 +59,28 @@ def extract_page(page_url):
     blog_content = soup.find("main").find("div", class_="BlogPost_htmlPost__Z5oDL")
 
     return blog_content.prettify()
+
+def remove_emojis(text):
+    # Regular expression to match emojis
+    emoji_pattern = re.compile(
+        "["
+        "\U0001F600-\U0001F64F"  # Emoticons
+        "\U0001F300-\U0001F5FF"  # Symbols & Pictographs
+        "\U0001F680-\U0001F6FF"  # Transport & Map Symbols
+        "\U0001F700-\U0001F77F"  # Alchemical Symbols
+        "\U0001F780-\U0001F7FF"  # Geometric Shapes Extended
+        "\U0001F800-\U0001F8FF"  # Supplemental Arrows-C
+        "\U0001F900-\U0001F9FF"  # Supplemental Symbols and Pictographs
+        "\U0001FA00-\U0001FA6F"  # Chess Symbols
+        "\U0001FA70-\U0001FAFF"  # Symbols and Pictographs Extended-A
+        "\U00002700-\U000027BF"  # Dingbats
+        "\U000024C2-\U0001F251"  # Enclosed Characters
+        "]+", 
+        flags=re.UNICODE
+    )
+    return emoji_pattern.sub(r'', text)
     
-def html_to_md(text: str) -> str:
+def html_to_md(html_content: str) -> str:
     """
     Preprocess the extracted text: convert HTML to Markdown, remove unwanted sections,
     clean up the text, and add the full domain to relative image URLs.
@@ -69,27 +91,23 @@ def html_to_md(text: str) -> str:
     Returns:
         str: The preprocessed Markdown text.
     """
-    # Convert HTML to Markdown
-    markdown_text = md(text, heading_style="ATX")
-
-    # Split the text into lines
-    lines = markdown_text.split('\n')
-
-    # Process lines between start_index and end_index
-    processed_lines = []
-    for line in lines:
-        # Remove extra whitespace
-        line = line.strip()
     
-        if line:
-            processed_lines.append(line)
+    # Remove emojis from the HTML content
+    cleaned_html = remove_emojis(html_content)
+    
+    # Create an instance of HTML2Text object
+    h = html2text.HTML2Text()
+    # Ignore links, images, and other content
+    h.ignore_links = False
+    h.ignore_images = False
+    
+    # Convert HTML to Markdown
+    markdown = h.handle(cleaned_html)
+    
+    return markdown
 
-    # Join the processed lines
-    processed_text = '\n'.join(processed_lines)
 
-    return processed_text
-
-def main(html_dir, md_dir, metadata_path="./data/llama_blogs_metadata.json"):
+def main(html_dir, md_dir, metadata_path="./data/llama_blogs_metadata.json", debug=False):
     os.makedirs(html_dir, exist_ok=True)
     os.makedirs(md_dir, exist_ok=True)
     
@@ -99,18 +117,23 @@ def main(html_dir, md_dir, metadata_path="./data/llama_blogs_metadata.json"):
         f.write(json.dumps(blogs_metadata))
 
     for blog_data in tqdm(blogs_metadata, desc="Crawling data"):
-        blog_url = blogs_metadata["url"]
+        blog_url = blog_data["url"]
         
         html_doc = extract_page(blog_url)
-        md_doc = html_to_md(cleaned_html)
+        md_doc = html_to_md(html_doc)
         
         save_name =  blog_url.split("/")[-1]
+
+        print("Saving:", save_name) 
         
         with open(f'{html_dir}/{save_name}.html', 'w', encoding='utf-8') as f:
             f.write(html_doc)
 
         with open(f'{md_dir}/{save_name}.md', 'w', encoding='utf-8') as f:
             f.write(md_doc)
+
+        if debug:
+            break
 
         
 if __name__ == "__main__":

@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup
+from markdownify import markdownify as md
 import requests
 import os
+import json
 from tqdm import tqdm
 import fire
 
@@ -55,17 +57,61 @@ def extract_page(page_url):
     blog_content = soup.find("main").find("div", class_="BlogPost_htmlPost__Z5oDL")
 
     return blog_content.prettify()
+    
+def html_to_md(text: str) -> str:
+    """
+    Preprocess the extracted text: convert HTML to Markdown, remove unwanted sections,
+    clean up the text, and add the full domain to relative image URLs.
 
+    Args:
+        text (str): The input HTML text to preprocess.
 
-def main(save_folder):
+    Returns:
+        str: The preprocessed Markdown text.
+    """
+    # Convert HTML to Markdown
+    markdown_text = md(text, heading_style="ATX")
+
+    # Split the text into lines
+    lines = markdown_text.split('\n')
+
+    # Process lines between start_index and end_index
+    processed_lines = []
+    for line in lines:
+        # Remove extra whitespace
+        line = line.strip()
+    
+        if line:
+            processed_lines.append(line)
+
+    # Join the processed lines
+    processed_text = '\n'.join(processed_lines)
+
+    return processed_text
+
+def main(html_dir, md_dir, metadata_path="./data/llama_blogs_metadata.json"):
+    os.makedirs(html_dir, exist_ok=True)
+    os.makedirs(md_dir, exist_ok=True)
+    
     # extract all blog page and save to folder data
-    blogs_data = get_blog_urls()
+    blogs_metadata = get_blog_urls()
+    with open(metadata_path, "w") as f:
+        f.write(json.dumps(blogs_metadata))
 
-    for blog_data in tqdm(blogs_data,desc="Crawling data"):
-        cleaned_html = extract_page(blog_data["url"])
-        save_name =  blog_data["url"].split("/")[-1]
-        with open(f'{save_folder}/{save_name}.html', 'w', encoding='utf-8') as f:
-            f.write(cleaned_html)
+    for blog_data in tqdm(blogs_metadata, desc="Crawling data"):
+        blog_url = blogs_metadata["url"]
+        
+        html_doc = extract_page(blog_url)
+        md_doc = html_to_md(cleaned_html)
+        
+        save_name =  blog_url.split("/")[-1]
+        
+        with open(f'{html_dir}/{save_name}.html', 'w', encoding='utf-8') as f:
+            f.write(html_doc)
 
+        with open(f'{md_dir}/{save_name}.md', 'w', encoding='utf-8') as f:
+            f.write(md_doc)
+
+        
 if __name__ == "__main__":
     fire.Fire(main)

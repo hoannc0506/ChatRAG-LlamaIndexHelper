@@ -54,3 +54,5 @@ def load_quantized_model(model_name_or_path, device="cuda"):
     )
 
     return model, tokenizer
+
+

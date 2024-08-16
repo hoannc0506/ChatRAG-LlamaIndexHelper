@@ -45,7 +45,10 @@ python index_utils.py creat_qdrant_index \
 python index_utils.py test_qdrant_indexing
 ```
 
-
+- Basic rag pipeline demo
+```bash
+python rag_basic_pipeline.py 
+```
 ## Results
 <!-- - **Question**: `"What are key features of llama-agents?"`
 - **Answer**:

@@ -16,15 +16,11 @@ logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
 def main():
     device_map = "cuda:0"
     # load llm and embedding
-    llm_hf, embed_model = agent_utils.load_llm_embed_models(
+    Settings.llm, Settings.embed_model = agent_utils.load_llm_embed_models(
         llm_name="models/Meta-Llama-3.1-8B-Instruct", 
         embed_name="models/bge-base-en-v1.5", 
         device_map=device_map
     )
-
-    # Update llamaindex settings
-    Settings.llm = llm_hf
-    Settings.embed_model = embed_model
         
     # indexing
     vector_index = index_utils.creat_qdrant_index()
@@ -32,6 +28,7 @@ def main():
     # querying
     query_engine = vector_index.as_query_engine(
         response_mode="compact",
+        use_async=True,
         streaming=True
     )
 

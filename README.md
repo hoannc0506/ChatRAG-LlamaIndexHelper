@@ -31,6 +31,7 @@ Combine ideas from paper RAG papers into a RAG agent:
 
 
 ## Usages
+- Notebook demo, compare rag techniques: `demos/...`
 - Crawl blogs data
 ```bash
 python crawl_data.py --html-dir "./data/llama-blogs-html/" --md-dir "./data/llama-blogs-md/"
@@ -49,10 +50,6 @@ python index_utils.py test_qdrant_indexing
 ```bash
 python rag_basic_pipeline.py 
 ```
-## Results
-<!-- - **Question**: `"What are key features of llama-agents?"`
-- **Answer**:
-![Response 1](./assets/demo_response_1.png) -->
 
 ## TODO
 - [x] Preprocess html to markdown

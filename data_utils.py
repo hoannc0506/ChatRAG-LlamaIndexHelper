@@ -15,7 +15,11 @@ import qdrant_client
 import fire
 
 
-def load_md_documents(docs_dir, docs_metadata, return_nodes=False):
+def load_md_documents(
+    docs_dir="./data/llama-blogs-md", 
+    docs_metadata="./data/llama_blogs_metadata.json", 
+    return_nodes=False
+):
     md_reader = FlatReader()
     parser = MarkdownNodeParser()
     
@@ -41,7 +45,6 @@ def parse_md_doc(doc):
     nodes = md_parser.get_nodes_from_documents(doc, show_progress=True)
     
     return nodes
-
 
 
 def semantic_chunking(docs, embed_model="models/bge-base-en-v1.5", device_map="cuda:1"):

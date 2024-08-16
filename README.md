@@ -51,6 +51,10 @@ python index_utils.py test_qdrant_indexing
 python rag_basic_pipeline.py 
 ```
 
+- Advanced rag pipeline: Hybrid search | Reranking | HyDE
+```bash
+python rag_advanced_pipeline.py
+```
 ## TODO
 - [x] Preprocess html to markdown
 - [x] DocumentSummaryIndex, RouterQueryEngine, Reranker, HyDe

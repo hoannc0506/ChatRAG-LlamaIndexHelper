@@ -10,12 +10,16 @@ logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
 import nest_asyncio
 nest_asyncio.apply()
 
-from llama_index.core import SimpleDirectoryReader
+from llama_index.core import (
+    SimpleDirectoryReader, Settings, StorageContext, 
+    VectorStoreIndex, QueryBundle
+)
 from llama_index.core.node_parser import SentenceSplitter
-from llama_index.core import Settings, StorageContext, VectorStoreIndex
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.vector_stores.qdrant import QdrantVectorStore
+from llama_index.core.retrievers import VectorIndexRetriever
+import json
 import chromadb
 import qdrant_client
 import data_utils
@@ -71,19 +75,12 @@ def create_chroma_index(local_db_dir, collection_name):
     vector_index.storage_context.persist(local_db_dir)
     
 
-
 def creat_qdrant_index(
     qdrant_dir="qdrant_db/", col_name="md-llama-blogs",
     embed_model="models/bge-base-en-v1.5", device_map="cuda:0",
     docs_dir="data/llama-blogs-md", docs_metadata="data/llama_blogs_metadata.json",
     hybrid_search=False, fastembed_sparse_model="Qdrant/bm42-all-minilm-l6-v2-attentions"
 ):
-    # load embeddings
-    embed_model = HuggingFaceEmbedding(model_name=embed_model, device=device_map)
-
-    # update settings
-    Settings.embed_model = embed_model
-    Settings.llm = None
 
     # init qdrant db
     client = qdrant_client.QdrantClient(
@@ -93,14 +90,14 @@ def creat_qdrant_index(
     if hybrid_search:
         vector_store = QdrantVectorStore(
             client=client,
-            collection_name=col_name
+            collection_name=col_name,
+            enable_hybrid=True,
+            fastembed_sparse_model="Qdrant/bm42-all-minilm-l6-v2-attentions"
         )
     else:
         vector_store = QdrantVectorStore(
             client=client,
             collection_name=col_name,
-            enable_hybrid=True,
-            fastembed_sparse_model="Qdrant/bm42-all-minilm-l6-v2-attentions"
         )
 
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
@@ -115,6 +112,15 @@ def creat_qdrant_index(
         
     else:
         print("Creating index from documents store")
+        # load embeddings
+        Settings.llm = None
+        if Settings.embed_model is None:
+            Settings.embed_model = HuggingFaceEmbedding(
+                model_name=embed_model, 
+                device=device_map
+            )
+            
+        # load nodes from documents
         nodes = data_utils.load_md_documents(
             docs_dir=docs_dir, docs_metadata=docs_metadata, return_nodes=True
         )
@@ -128,11 +134,32 @@ def creat_qdrant_index(
         
     return index
 
-def test_qdrant_indexing():
-    qdrant_index = creat_qdrant_index()
-    import pdb;pdb.set_trace()
+def test_qdrant_indexing(device_map="cuda:0"):
+    # embed models
+    Settings.embed_model = HuggingFaceEmbedding(
+        model_name="models/bge-base-en-v1.5",
+        device=device_map
+    )
+    Settings.llm = None
+    
+    # indexing
+    vector_index = creat_qdrant_index()
+    
+    query = '''What are the two critical areas of RAG system performance that are assessed \
+in the "Evaluating RAG with LlamaIndex" section of the OpenAI Cookbook?'''
+    query_bundle = QueryBundle(query)
 
-    print("Successfully indexing")
+    retriever = VectorIndexRetriever(
+        index=vector_index,
+        similarity_top_k=5,
+    )
+
+    retrieved_nodes = retriever.retrieve(query_bundle)
+    print("Question:", query)
+    print("Retrieved nodes:")
+    for idx, node in enumerate(retrieved_nodes):
+        print(f"Node {idx}\n", json.dumps(node.metadata, indent=2))
+        print("=="*40)
 
 if __name__ == "__main__":
     import fire

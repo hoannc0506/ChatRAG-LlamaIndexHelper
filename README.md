@@ -38,9 +38,11 @@ python crawl_data.py --html-dir "./data/llama-blogs-html/" --md-dir "./data/llam
 
 - Indexing with QdrantDB
 ```bash
-python index_utils.py test_qdrant_indexing \
+python index_utils.py creat_qdrant_index \
 --qdrant-dir "qdrant_db/" --col-name "md-llama-blogs" \
 --docs-dir "data/llama-blogs-md" -docs-metadata="data/llama_blogs_metadata.json"
+
+python index_utils.py test_qdrant_indexing
 ```
 
 

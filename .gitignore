@@ -4,3 +4,4 @@ chroma_db/
 data/
 *.html
 qdrant_db/
+notebooks/

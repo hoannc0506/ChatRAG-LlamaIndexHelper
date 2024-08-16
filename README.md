@@ -35,6 +35,7 @@ Combine ideas from paper RAG papers into a RAG agent:
 ```bash
 python crawl_data.py --html-dir "./data/llama-blogs-html/" --md-dir "./data/llama-blogs-md/"
 ```
+
 ## Results
 <!-- - **Question**: `"What are key features of llama-agents?"`
 - **Answer**:
@@ -44,6 +45,8 @@ python crawl_data.py --html-dir "./data/llama-blogs-html/" --md-dir "./data/llam
 - [x] Preprocess html to markdown
 - [x] DocumentSummaryIndex, RouterQueryEngine, Reranker, HyDe
 - [x] QdrantDB, Hybrid-Search
-- [ ] Implement RAG Agent
-- [ ] Evaluate RAG pipeline with Ragas
+- [x] Implement Multi document Agents
+- [x] Evaluate RAG pipeline with Ragas
+- [ ] Implement SelfRAG
+- [ ] Delploy with llama-agents
 - [ ] Build gradio UI demo

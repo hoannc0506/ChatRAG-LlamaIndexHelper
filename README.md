@@ -36,6 +36,14 @@ Combine ideas from paper RAG papers into a RAG agent:
 python crawl_data.py --html-dir "./data/llama-blogs-html/" --md-dir "./data/llama-blogs-md/"
 ```
 
+- Indexing with QdrantDB
+```bash
+python index_utils.py test_qdrant_indexing \
+--qdrant-dir "qdrant_db/" --col-name "md-llama-blogs" \
+--docs-dir "data/llama-blogs-md" -docs-metadata="data/llama_blogs_metadata.json"
+```
+
+
 ## Results
 <!-- - **Question**: `"What are key features of llama-agents?"`
 - **Answer**:

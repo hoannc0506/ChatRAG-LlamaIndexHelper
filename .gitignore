@@ -5,3 +5,4 @@ data/
 *.html
 qdrant_db/
 notebooks/
+models/

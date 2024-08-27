@@ -18,7 +18,8 @@ import fire
 
 
 def main(
-    test_size=10
+    save_path,
+    test_size=10,
 ):
     # generator with openai models
     Settings.llm = OpenAI(model="gpt-4o-mini")
@@ -37,7 +38,6 @@ def main(
         docs_metadata='./data/llama_blogs_metadata.json'
     )
     
-    
     # use random doc only to reduce embedding cost
     test_docs = random.sample(documents, test_size)
     
@@ -46,7 +46,6 @@ def main(
         critic_llm=Settings.llm,
         embeddings=Settings.embed_model,
     )
-    
     
     testset = generator.generate_with_llamaindex_docs(
         test_docs,
@@ -57,7 +56,7 @@ def main(
     
     
     df_test = testset.to_pandas()
-    
+    df.to_csv(save_path)
     
     print(
         "Embedding Tokens: ",

@@ -15,7 +15,7 @@ A chatbot specifically designed to answer questions relevant to LlamaIndex from 
 ![Basic pipeline RAG](./assets/rag_basic_pipeline.webp)
 
 
-### Advanced RAG pipeline
+### Agentic RAG pipeline
 Combine ideas from paper RAG papers into a RAG agent:
 
 - **Routing:**  Adaptive RAG ([paper](https://arxiv.org/abs/2403.14403)). Route questions to different retrieval approaches

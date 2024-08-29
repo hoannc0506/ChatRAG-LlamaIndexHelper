@@ -6,10 +6,6 @@ import os
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
 
-# llama index ascyncio config
-import nest_asyncio
-nest_asyncio.apply()
-
 from llama_index.core import (
     SimpleDirectoryReader, Settings, StorageContext, 
     VectorStoreIndex, QueryBundle
@@ -24,55 +20,56 @@ import chromadb
 import qdrant_client
 import data_utils
 
-def create_chroma_index(local_db_dir, collection_name):
-    # load embeddings
-    embed_model = HuggingFaceEmbedding(model_name="models/bge-small-en-v1.5", device="cuda")
-
-    # update settings
-    Settings.embed_model = embed_model
-    Settings.llm = None
+def check_exist_coll(db_dir, db_type):
+    pass
     
-    # load documents
-    documents = SimpleDirectoryReader(
-        input_dir="./data",
-        filename_as_id=True,
-    ).load_data()
-    # import pdb;pdb.set_trace()
-    print(f"Loaded {len(documents)} documents")
 
-    splitter = SentenceSplitter(
-        chunk_size=1024,
-        chunk_overlap=200
-    )
+def create_chroma_index(
+    db_dir="./chroma_db", coll_name="md-llama-blogs",
+    docs_dir="./data/llama-blogs-md", docs_metadata="data/llama_blogs_metadata.json",
+    embed_model="models/bge-base-en-v1.5", device_map="cuda:1", re_indexing=False
+):
+    chroma_client = chromadb.PersistentClient(path=db_dir)
+    
+    # check exist collection
+    colls = chroma_client.list_collections()
+    coll_names = [coll.name for coll in colls]
 
-    # split documents to nodes
-    nodes = splitter.get_nodes_from_documents(documents)
-    print(f"Splitted {len(documents)} documents to {len(nodes)} nodes.")
+    # Init chromadb
+    vector_collection = chroma_client.get_or_create_collection(coll_name)
 
-    # Creates a persistent instance of Chroma that saves to disk
-    chroma_client = chromadb.PersistentClient(path="./chroma_db")
-    
-    # Get or create a collection with the given name and metadata.
-    vector_collection = chroma_client.get_or_create_collection(collection_name)
-    
-    print(vector_collection, vector_collection.count())
-    
     # Init chromadb storage
     vector_store = ChromaVectorStore(
         chroma_collection=vector_collection,
-        persist_dir=local_db_dir
+        persist_dir=db_dir
     )
-    vector_storage_context = StorageContext.from_defaults(vector_store=vector_store)
+    storage_context = StorageContext.from_defaults(vector_store=vector_store)
     
-    # create vector index
-    vector_index = VectorStoreIndex(
-        nodes,
-        storage_context=vector_storage_context, 
-        show_progress=True
-    )
+    if coll_name in coll_names and not reindexing:
+        print("Loading index from vector store")
+        vector_index = VectorStoreIndex.from_vector_store(
+            vector_store,
+            show_progress=True
+        )
+    else:
+        print("Creating index from documents")
+        if Settings.embed_model is None:
+            # load embeddings
+            Settings.embed_model = HuggingFaceEmbedding(model_name=embed_model, device=device_map)
+    
+        # load nodes from documents
+        nodes = data_utils.load_md_documents(
+            docs_dir=docs_dir, docs_metadata=docs_metadata, return_nodes=True
+        )
 
-    # save index to local
-    vector_index.storage_context.persist(local_db_dir)
+        # create vector index
+        vector_index = VectorStoreIndex(
+            nodes,
+            storage_context=storage_context, 
+            show_progress=True
+        )
+
+    return vector_index
     
 
 def creat_qdrant_index(
@@ -92,7 +89,7 @@ def creat_qdrant_index(
             client=client,
             collection_name=col_name,
             enable_hybrid=True,
-            fastembed_sparse_model="Qdrant/bm42-all-minilm-l6-v2-attentions"
+            fastembed_sparse_model=fastembed_sparse_model
         )
     else:
         vector_store = QdrantVectorStore(
@@ -134,7 +131,9 @@ def creat_qdrant_index(
         
     return index
 
-def test_qdrant_indexing(device_map="cuda:0"):
+def test_vector_index(db_type, device_map="cuda:1"):
+    assert db_type in ['qdrant', 'chroma']
+    
     # embed models
     Settings.embed_model = HuggingFaceEmbedding(
         model_name="models/bge-base-en-v1.5",
@@ -143,7 +142,10 @@ def test_qdrant_indexing(device_map="cuda:0"):
     Settings.llm = None
     
     # indexing
-    vector_index = creat_qdrant_index()
+    if db_type == 'qdrant':
+        vector_index = creat_qdrant_index(device_map=device_map)
+    else: 
+        vector_index = create_chroma_index(device_map=device_map)
     
     query = '''What are the two critical areas of RAG system performance that are assessed \
 in the "Evaluating RAG with LlamaIndex" section of the OpenAI Cookbook?'''
@@ -163,4 +165,4 @@ in the "Evaluating RAG with LlamaIndex" section of the OpenAI Cookbook?'''
 
 if __name__ == "__main__":
     import fire
-    fire.Fire()
+    fire.Fire(test_vector_index)
